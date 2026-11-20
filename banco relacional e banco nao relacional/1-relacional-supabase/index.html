@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mini-Loja · Banco Relacional (Supabase)</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#f4f6f9;--card:#fff;--ink:#131a24;--mut:#5a6677;--line:#e2e7ee;--acc:#1f9d6b;--acc-d:#157a52;--acc-soft:#e4f5ed;--acc-ink:#fff;--ok:#12803f;--bad:#c52a2a;--bad-soft:#fdecec;--warn:#9a6700;--warn-soft:#fff6dd;--code-bg:#0e1621;--code-ink:#d6e2f3;--r:14px;--shadow:0 1px 2px rgba(16,24,40,.05),0 4px 14px rgba(16,24,40,.05)}
+html{font-size:16px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:280px}
+body.drawer-closed{padding-bottom:70px}
+h1,h2,h3{margin:0;line-height:1.2}
+code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+.top{background:var(--card);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{display:flex;gap:14px;align-items:center}
+.logo{width:44px;height:44px;border-radius:12px;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center;font-size:24px}
+.brand h1{font-size:1.35rem}.brand h1 small{font-weight:600;color:var(--acc-d);font-size:.9rem;margin-left:6px;background:var(--acc-soft);padding:2px 10px;border-radius:99px;vertical-align:middle}
+.brand p{margin:2px 0 0;color:var(--mut);font-size:.9rem}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;font-weight:600;font-size:.9rem;border:1px solid var(--line);background:#fff;color:var(--mut)}
+.pill::before{content:"";width:10px;height:10px;border-radius:50%;background:#9aa5b4}
+.pill.on{color:var(--ok);border-color:#bfe6cf;background:#effaf3}.pill.on::before{background:#22b35e;box-shadow:0 0 0 4px #22b35e33}
+.pill.sim{color:var(--warn);border-color:#f0dca0;background:var(--warn-soft)}.pill.sim::before{background:#e0a100}
+nav.tabs{max-width:1100px;margin:18px auto 0;padding:0 24px;display:flex;gap:8px;flex-wrap:wrap}
+nav.tabs button{border:1px solid var(--line);background:#fff;color:var(--ink);padding:10px 18px;border-radius:99px;font:inherit;font-weight:600;cursor:pointer}
+nav.tabs button:hover{border-color:var(--acc)}
+nav.tabs button.active{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+main{max-width:1100px;margin:18px auto;padding:0 24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);margin-bottom:18px}
+.card h2{font-size:1.1rem;margin-bottom:4px}
+.card .sub{color:var(--mut);margin:0 0 14px;font-size:.93rem}
+.grid{display:grid;gap:18px}.g2{grid-template-columns:1fr 1fr}
+@media(max-width:860px){.g2{grid-template-columns:1fr}}
+label{display:block;font-size:.82rem;font-weight:600;color:var(--mut);margin-bottom:4px}
+input,select,textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid #cfd6e0;border-radius:10px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:0;border-color:var(--acc)}
+textarea{min-height:150px;font-family:ui-monospace,Consolas,monospace;font-size:.85rem}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}.row>*{flex:1 1 160px}.row>.fit{flex:0 0 auto}
+.field{margin-bottom:12px}
+button.btn,a.btn{display:inline-block;font:inherit;font-weight:600;padding:10px 16px;border-radius:10px;border:1px solid transparent;background:var(--acc);color:var(--acc-ink);cursor:pointer}
+button.btn:hover,a.btn:hover{background:var(--acc-d)}button.btn:disabled{opacity:.5;cursor:default}
+button.btn.ghost,a.btn.ghost{background:#fff;color:var(--ink);border-color:#cfd6e0}button.btn.ghost:hover,a.btn.ghost:hover{border-color:var(--acc);color:var(--acc-d)}
+button.btn.danger{background:#fff;color:var(--bad);border-color:#f0c4c4}button.btn.danger:hover{background:var(--bad-soft)}
+button.btn.sm,a.btn.sm{padding:5px 11px;font-size:.85rem}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid #eef1f5;vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.empty{padding:26px;text-align:center;color:var(--mut);border:2px dashed var(--line);border-radius:12px}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.78rem;font-weight:700;background:#eef1f5;color:var(--mut)}
+.badge.novo{background:#e8f0fe;color:#1a56c4}.badge.pago{background:#e4f5ed;color:var(--ok)}.badge.enviado{background:#f1e8fd;color:#6a2fc4}.badge.cancelado{background:var(--bad-soft);color:var(--bad)}
+.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+.steps li{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:14px 0;border-bottom:1px solid #eef1f5}
+.steps li:last-child{border-bottom:0}
+.ico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:15px;font-weight:700;background:#eef1f5;color:var(--mut)}
+.ico.ok{background:#dff4e8;color:var(--ok)}.ico.bad{background:var(--bad-soft);color:var(--bad)}.ico.wait{background:var(--warn-soft);color:var(--warn)}
+.steps h3{font-size:1rem;margin-bottom:2px}.steps p{margin:0 0 8px;color:var(--mut);font-size:.9rem}
+.steps .msg{font-size:.88rem;margin:4px 0 8px}.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}.msg.wait{color:var(--warn)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+details{margin-top:8px}summary{cursor:pointer;color:var(--acc-d);font-weight:600;font-size:.88rem}
+pre{margin:8px 0 0;background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:14px;font-size:.8rem;line-height:1.55;overflow:auto;max-height:340px;white-space:pre}
+.hint{background:var(--warn-soft);border:1px solid #f0dca0;color:#6b4b00;border-radius:10px;padding:10px 14px;font-size:.9rem}
+.banner-bad{background:var(--bad-soft);border:1px solid #f0c4c4;color:#8a1f1f;border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.cart{margin:10px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.cart td,.cart th{padding:7px 10px}
+.pedido{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;background:#fff}
+.pedido header{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.pedido header .grow{flex:1}.pedido header select{width:auto;padding:5px 8px;font-size:.88rem}
+.total{font-weight:800;font-size:1.05rem}
+.mut{color:var(--mut)}.small{font-size:.85rem}
+#toasts{position:fixed;right:18px;bottom:290px;display:flex;flex-direction:column;gap:10px;z-index:50;max-width:min(460px,92vw)}
+body.drawer-closed #toasts{bottom:80px}
+.toast{background:#fff;border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:10px;padding:12px 14px;box-shadow:0 8px 24px rgba(16,24,40,.18);font-size:.92rem}
+.toast.erro{border-left-color:var(--bad)}.toast .raw{display:block;margin-top:6px;color:var(--mut);font-size:.78rem;font-family:ui-monospace,Consolas,monospace;word-break:break-word}
+#bastidores{position:fixed;left:0;right:0;bottom:0;background:var(--code-bg);color:var(--code-ink);border-top:3px solid var(--acc);z-index:40;max-height:260px;display:flex;flex-direction:column}
+#bastidores.closed{max-height:48px}
+#bastidores .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 24px;cursor:pointer;user-select:none;font-weight:600;font-size:.92rem;min-height:48px}
+#bastidores .bar span.tag{background:var(--acc);color:#fff;border-radius:99px;padding:1px 9px;font-size:.78rem;margin-left:8px}
+#bastidores .body{overflow:auto;padding:0 24px 14px}
+#bastidores.closed .body{display:none}
+#bastidores .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:860px){#bastidores .cols{grid-template-columns:1fr}}
+#bastidores h4{margin:0 0 4px;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:#8fa3bd}
+#bastidores pre{margin:0;background:#16212f;max-height:none;white-space:pre-wrap}
+#bastidores .old{margin-top:10px;color:#8fa3bd;font-size:.8rem}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;font-size:.9rem}
+
+.pill.off{color:var(--bad);border-color:#f0c4c4;background:var(--bad-soft)}.pill.off::before{background:var(--bad)}
+
+:root{--acc:#1f9d6b;--acc-d:#157a52;--acc-soft:#e4f5ed}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="logo">⛁</div>
+    <div>
+      <h1>Mini-Loja <small>Banco relacional</small></h1>
+      <p>PostgreSQL via Supabase · tabelas ligadas por chaves estrangeiras</p>
+    </div>
+  </div>
+  <div id="status" class="pill">Desconectado</div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="conexao" class="active">⚙ Conexão</button>
+  <button data-tab="clientes">👤 Clientes</button>
+  <button data-tab="produtos">📦 Produtos</button>
+  <button data-tab="pedidos">🧾 Pedidos</button>
+</nav>
+
+<main>
+  <!-- ===================== CONEXÃO ===================== -->
+  <section id="tab-conexao">
+    <div class="grid g2">
+      <div class="card">
+        <h2>1 · Conectar ao Supabase</h2>
+        <p class="sub">Cole os dados do seu projeto (ficam salvos só neste navegador).</p>
+        <div class="field"><label for="cfg-url">Project URL</label>
+          <input id="cfg-url" placeholder="https://xxxxxxxx.supabase.co" autocomplete="off" spellcheck="false"></div>
+        <div class="field"><label for="cfg-key">Publishable key (ou anon key)</label>
+          <input id="cfg-key" placeholder="sb_publishable_..." autocomplete="off" spellcheck="false"></div>
+        <div class="actions">
+          <button class="btn" id="btn-conectar">Conectar</button>
+          <button class="btn ghost" id="btn-diag">Rodar diagnóstico</button>
+          <button class="btn ghost" id="btn-sim">Usar modo simulado</button>
+          <button class="btn danger" id="btn-desc">Desconectar</button>
+        </div>
+        <p class="small mut" style="margin:12px 0 0">Onde achar: no painel do projeto, botão <b>Connect</b> (topo) ou <b>Settings → API Keys</b>.
+          Use a chave <b>Publishable</b> — nunca a <b>Secret</b>/<b>service_role</b>.</p>
+        <div class="hint" style="margin-top:12px"><b>Modo simulado:</b> funciona sem internet, guardando tudo no navegador. É um plano B caso o Wi-Fi caia durante o briefing.</div>
+      </div>
+
+      <div class="card">
+        <h2>2 · Roteiro do backend <span class="mut" style="font-weight:400">(atualiza sozinho)</span></h2>
+        <p class="sub">Cada item vira ✔ quando o front confirma que o banco está certo.</p>
+        <ol class="steps" id="roteiro"></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CLIENTES ===================== -->
+  <section id="tab-clientes" hidden>
+    <div class="card">
+      <h2>Novo cliente</h2>
+      <p class="sub">Tabela <code>clientes</code> · e-mail é <code>UNIQUE</code>.</p>
+      <form id="form-cliente" class="row">
+        <div><label>Nome</label><input name="nome" required placeholder="Maria Silva"></div>
+        <div><label>E-mail</label><input name="email" type="email" required placeholder="maria@exemplo.com"></div>
+        <div class="fit"><button class="btn">Adicionar</button></div>
+      </form>
+    </div>
+    <div class="card"><h2>Clientes</h2><div id="lista-clientes"></div></div>
+  </section>
+
+  <!-- ===================== PRODUTOS ===================== -->
+  <section id="tab-produtos" hidden>
+    <div class="card">
+      <h2>Novo produto</h2>
+      <p class="sub">Tabela <code>produtos</code> · preço e estoque não podem ser negativos (<code>CHECK</code>).</p>
+      <form id="form-produto" class="row">
+        <div style="flex:2 1 220px"><label>Nome</label><input name="nome" required placeholder="Cabo HDMI 2m"></div>
+        <div><label>Preço (R$)</label><input name="preco" type="number" step="0.01" min="-1000" required placeholder="39.90"></div>
+        <div><label>Estoque</label><input name="estoque" type="number" step="1" min="-100" value="10" required></div>
+        <div class="fit"><button class="btn">Adicionar</button></div>
+      </form>
+    </div>
+    <div class="card"><h2>Produtos</h2><div id="lista-produtos"></div></div>
+  </section>
+
+  <!-- ===================== PEDIDOS ===================== -->
+  <section id="tab-pedidos" hidden>
+    <div class="card">
+      <h2>Novo pedido</h2>
+      <p class="sub">Grava em <code>pedidos</code> (1 linha) + <code>itens_pedido</code> (1 linha por produto) — ligadas por chave estrangeira.</p>
+      <div class="row">
+        <div><label>Cliente</label><select id="ped-cliente"></select></div>
+        <div><label>Status</label>
+          <select id="ped-status"><option>novo</option><option>pago</option><option>enviado</option><option>cancelado</option></select></div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <div style="flex:2 1 240px"><label>Produto</label><select id="ped-produto"></select></div>
+        <div><label>Quantidade</label><input id="ped-qtd" type="number" min="1" value="1"></div>
+        <div class="fit"><button class="btn ghost" id="ped-add" type="button">+ Adicionar item</button></div>
+      </div>
+      <div id="ped-cart"></div>
+      <div class="actions"><button class="btn" id="ped-salvar">Criar pedido</button></div>
+    </div>
+    <div class="card"><h2>Pedidos</h2>
+      <p class="sub">Uma única consulta traz o pedido + cliente + itens + produtos (JOIN). Veja o SQL em <b>Bastidores</b>.</p>
+      <div id="lista-pedidos"></div></div>
+  </section>
+</main>
+
+<div id="toasts"></div>
+
+<aside id="bastidores">
+  <div class="bar" id="bast-bar"><div>🔎 Bastidores — o que o front mandou para o banco <span class="tag" id="bast-count">0</span></div><div id="bast-toggle">▼ recolher</div></div>
+  <div class="body" id="bast-body"><div class="mut" style="color:#8fa3bd;padding-top:6px">Faça qualquer ação (listar, inserir, excluir) e o SQL equivalente aparece aqui.</div></div>
+</aside>
+
+<script type="module">
+/* =====================================================================
+   CONFIGURAÇÃO — opcional: se preencher aqui, o front já abre conectado.
+   (a publishable key é feita para ficar no navegador; a SECRET, nunca)
+   ===================================================================== */
+const CONFIG_PADRAO = { url: "", key: "" };
+
+const SUPABASE_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+const TABELAS = ["clientes", "produtos", "pedidos", "itens_pedido"];
+const SQL = {
+  s01: "-- ============================================================\n-- 01 · TABELAS  (modelo relacional: Mini-Loja)\n--\n--   clientes 1 ──< pedidos 1 ──< itens_pedido >── 1 produtos\n--\n-- Cole no  SQL Editor  do Supabase e clique em RUN.\n-- ============================================================\n\ncreate table if not exists public.clientes (\n  id        bigint generated always as identity primary key,\n  nome      text        not null,\n  email     text        not null unique,          -- UNIQUE: não repete e-mail\n  criado_em timestamptz not null default now()\n);\n\ncreate table if not exists public.produtos (\n  id      bigint generated always as identity primary key,\n  nome    text           not null,\n  preco   numeric(10,2)  not null check (preco >= 0),   -- CHECK: sem preço negativo\n  estoque integer        not null default 0 check (estoque >= 0)\n);\n\ncreate table if not exists public.pedidos (\n  id         bigint generated always as identity primary key,\n  cliente_id bigint not null\n             references public.clientes(id) on delete restrict,  -- FK: não apaga cliente com pedido\n  status     text   not null default 'novo'\n             check (status in ('novo','pago','enviado','cancelado')),\n  criado_em  timestamptz not null default now()\n);\n\ncreate table if not exists public.itens_pedido (\n  id             bigint generated always as identity primary key,\n  pedido_id      bigint        not null\n                 references public.pedidos(id)  on delete cascade,   -- apagou o pedido, apaga os itens\n  produto_id     bigint        not null\n                 references public.produtos(id) on delete restrict,  -- não apaga produto já vendido\n  quantidade     integer       not null check (quantidade > 0),\n  preco_unitario numeric(10,2) not null check (preco_unitario >= 0)\n);\n\n-- Índices nas chaves estrangeiras (boa prática para JOINs rápidos)\ncreate index if not exists idx_pedidos_cliente on public.pedidos(cliente_id);\ncreate index if not exists idx_itens_pedido    on public.itens_pedido(pedido_id);\ncreate index if not exists idx_itens_produto   on public.itens_pedido(produto_id);\n\n-- Avisa a API do Supabase (PostgREST) que o schema mudou\nnotify pgrst, 'reload schema';\n",
+  s02: "-- ============================================================\n-- 02 · PERMISSÕES  (GRANT + RLS)\n--\n-- Duas camadas controlam o acesso pela API do navegador:\n--   1) GRANT  -> o papel (anon) pode tocar na tabela?\n--   2) RLS    -> quais LINHAS ele pode ver/alterar? (policies)\n--\n-- ⚠ SOMENTE PARA DEMONSTRAÇÃO: libera tudo para qualquer visitante\n--   (papel \"anon\"). Em produção, use Supabase Auth e policies\n--   do tipo  using (auth.uid() = user_id).\n-- ============================================================\n\n-- 1) GRANT (projetos novos não expõem tabelas automaticamente)\ngrant usage on schema public to anon, authenticated;\ngrant select, insert, update, delete\n  on public.clientes, public.produtos, public.pedidos, public.itens_pedido\n  to anon, authenticated;\ngrant usage, select on all sequences in schema public to anon, authenticated;\n\n-- 2) RLS ligado + uma policy \"liberada geral\" por tabela\nalter table public.clientes     enable row level security;\nalter table public.produtos     enable row level security;\nalter table public.pedidos      enable row level security;\nalter table public.itens_pedido enable row level security;\n\ndrop policy if exists \"demo: acesso total\" on public.clientes;\ndrop policy if exists \"demo: acesso total\" on public.produtos;\ndrop policy if exists \"demo: acesso total\" on public.pedidos;\ndrop policy if exists \"demo: acesso total\" on public.itens_pedido;\n\ncreate policy \"demo: acesso total\" on public.clientes\n  for all to anon, authenticated using (true) with check (true);\ncreate policy \"demo: acesso total\" on public.produtos\n  for all to anon, authenticated using (true) with check (true);\ncreate policy \"demo: acesso total\" on public.pedidos\n  for all to anon, authenticated using (true) with check (true);\ncreate policy \"demo: acesso total\" on public.itens_pedido\n  for all to anon, authenticated using (true) with check (true);\n\nnotify pgrst, 'reload schema';\n",
+  s03: "-- ============================================================\n-- 03 · DADOS DE EXEMPLO  (opcional)\n-- Rode DEPOIS do 01 (tabelas). Pode rodar uma vez só.\n-- ============================================================\n\ninsert into public.clientes (nome, email) values\n  ('Ana Souza',    'ana@exemplo.com'),\n  ('Bruno Lima',   'bruno@exemplo.com'),\n  ('Carla Mendes', 'carla@exemplo.com');\n\ninsert into public.produtos (nome, preco, estoque) values\n  ('Teclado mecânico', 289.90, 15),\n  ('Mouse sem fio',     99.90, 40),\n  ('Monitor 24\"',      799.00,  8),\n  ('Headset USB',      189.50, 22),\n  ('Webcam Full HD',   249.00, 12);\n\n-- Pedido 1: Ana comprou teclado + mouse\nwith p as (\n  insert into public.pedidos (cliente_id, status)\n  select id, 'pago' from public.clientes where email = 'ana@exemplo.com'\n  returning id\n)\ninsert into public.itens_pedido (pedido_id, produto_id, quantidade, preco_unitario)\nselect p.id, pr.id, v.qtd, pr.preco\nfrom p\njoin (values ('Teclado mecânico', 1), ('Mouse sem fio', 2)) as v(nome, qtd) on true\njoin public.produtos pr on pr.nome = v.nome;\n\n-- Pedido 2: Bruno comprou monitor\nwith p as (\n  insert into public.pedidos (cliente_id, status)\n  select id, 'novo' from public.clientes where email = 'bruno@exemplo.com'\n  returning id\n)\ninsert into public.itens_pedido (pedido_id, produto_id, quantidade, preco_unitario)\nselect p.id, pr.id, 1, pr.preco\nfrom p\njoin public.produtos pr on pr.nome = 'Monitor 24\"';\n",
+};
+
+/* ------------------------------ utilidades ------------------------------ */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const brl = n => Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmtData = d => new Date(d).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+const sq = v => "'" + String(v).replace(/'/g, "''") + "'";
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+};
+async function copiar(texto) {
+  try { await navigator.clipboard.writeText(texto); }
+  catch {
+    const t = document.createElement("textarea"); t.value = texto; document.body.appendChild(t); t.select();
+    try { document.execCommand("copy"); } finally { t.remove(); }
+  }
+  toast("Copiado! Agora é só colar no SQL Editor do Supabase.");
+}
+function toast(msg, tipo = "ok", raw = "") {
+  const el = document.createElement("div");
+  el.className = "toast" + (tipo === "erro" ? " erro" : "");
+  el.innerHTML = esc(msg) + (raw ? `<span class="raw">${esc(raw)}</span>` : "");
+  $("#toasts").appendChild(el);
+  setTimeout(() => el.remove(), tipo === "erro" ? 9000 : 3500);
+}
+
+/* -------------------- tradução de erros para português -------------------- */
+function explicar(e) {
+  const msg = e?.message || String(e);
+  const code = e?.code || "";
+  if (code === "23503") return "Bloqueado pela CHAVE ESTRANGEIRA: existem registros ligados a este item (ex.: cliente com pedidos). É a integridade referencial do banco relacional.";
+  if (code === "23505") return "Valor repetido: já existe um registro com este e-mail (restrição UNIQUE).";
+  if (code === "23514") return "Valor recusado por uma regra CHECK da tabela (ex.: preço/estoque negativo, status inválido).";
+  if (code === "23502") return "Campo obrigatório vazio (NOT NULL).";
+  if (code === "42501" || /row-level security|permission denied/i.test(msg)) return "Permissão negada. Falta rodar o 02_permissoes.sql (GRANT + policies de RLS).";
+  if (code === "PGRST205" || code === "42P01" || /Could not find the table|does not exist/i.test(msg)) return "Tabela não encontrada. Falta rodar o 01_tabelas.sql no SQL Editor.";
+  if (code === "PGRST200" || /relationship/i.test(msg)) return "A API ainda não enxergou as chaves estrangeiras. Rode no SQL Editor:  notify pgrst, 'reload schema';";
+  if (e?.status === 401 || /Invalid API key|apikey|JWT/i.test(msg)) return "Chave inválida. Confira se copiou a Publishable key do projeto certo.";
+  if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) return "Não consegui falar com o servidor. Confira a Project URL e a internet.";
+  return msg;
+}
+function falhar(e) { console.error(e); toast(explicar(e), "erro", e?.code ? `${e.code} · ${e.message}` : e?.message); }
+
+/* ------------------------------ Bastidores ------------------------------ */
+const traces = [];
+function trace(titulo, sql, js) {
+  traces.unshift({ titulo, sql, js, hora: new Date().toLocaleTimeString("pt-BR") });
+  traces.length = Math.min(traces.length, 8);
+  renderTraces();
+}
+function renderTraces() {
+  $("#bast-count").textContent = traces.length;
+  if (!traces.length) return;
+  const [t, ...resto] = traces;
+  $("#bast-body").innerHTML = `
+    <div style="margin:4px 0 8px"><b>${esc(t.titulo)}</b> <span style="color:#8fa3bd;font-size:.8rem">${t.hora}</span></div>
+    <div class="cols">
+      <div><h4>SQL equivalente (PostgreSQL)</h4><pre>${esc(t.sql)}</pre></div>
+      <div><h4>Código no front (supabase-js)</h4><pre>${esc(t.js)}</pre></div>
+    </div>
+    ${resto.length ? `<div class="old">Antes: ${resto.map(r => esc(r.titulo)).join(" · ")}</div>` : ""}`;
+}
+$("#bast-bar").addEventListener("click", () => {
+  const fechado = $("#bastidores").classList.toggle("closed");
+  document.body.classList.toggle("drawer-closed", fechado);
+  $("#bast-toggle").textContent = fechado ? "▲ abrir" : "▼ recolher";
+});
+
+const TRACES = {
+  listClientes: () => ["Listar clientes", "select * from clientes\norder by id desc;", "await sb.from('clientes')\n  .select('*')\n  .order('id', { ascending: false })"],
+  addCliente: c => ["Inserir cliente", `insert into clientes (nome, email)\nvalues (${sq(c.nome)}, ${sq(c.email)});`, `await sb.from('clientes')\n  .insert({ nome: ${JSON.stringify(c.nome)}, email: ${JSON.stringify(c.email)} })`],
+  delCliente: id => ["Excluir cliente", `delete from clientes where id = ${id};\n-- falha se houver pedidos (FK ON DELETE RESTRICT)`, `await sb.from('clientes')\n  .delete()\n  .eq('id', ${id})`],
+  listProdutos: () => ["Listar produtos", "select * from produtos\norder by id desc;", "await sb.from('produtos')\n  .select('*')\n  .order('id', { ascending: false })"],
+  addProduto: p => ["Inserir produto", `insert into produtos (nome, preco, estoque)\nvalues (${sq(p.nome)}, ${p.preco}, ${p.estoque});`, `await sb.from('produtos')\n  .insert({ nome: ${JSON.stringify(p.nome)}, preco: ${p.preco}, estoque: ${p.estoque} })`],
+  delProduto: id => ["Excluir produto", `delete from produtos where id = ${id};\n-- falha se o produto já foi vendido (FK ON DELETE RESTRICT)`, `await sb.from('produtos')\n  .delete()\n  .eq('id', ${id})`],
+  listPedidos: () => ["Listar pedidos (JOIN de 4 tabelas)",
+    "select p.id, p.status, p.criado_em,\n       c.nome, c.email,\n       i.quantidade, i.preco_unitario,\n       pr.nome as produto\nfrom pedidos p\njoin clientes c            on c.id = p.cliente_id\nleft join itens_pedido i   on i.pedido_id = p.id\nleft join produtos pr      on pr.id = i.produto_id\norder by p.id desc;",
+    "await sb.from('pedidos')\n  .select(`id, status, criado_em,\n           clientes(nome, email),\n           itens_pedido(quantidade, preco_unitario,\n                        produtos(nome))`)\n  .order('id', { ascending: false })\n// o supabase-js monta o JOIN sozinho\n// usando as chaves estrangeiras"],
+  addPedido: p => ["Criar pedido + itens",
+    `begin;\ninsert into pedidos (cliente_id, status)\nvalues (${p.cliente_id}, ${sq(p.status)})\nreturning id;\n\n${p.itens.map(i => `insert into itens_pedido (pedido_id, produto_id, quantidade, preco_unitario)\nvalues (:pedido_id, ${i.produto_id}, ${i.quantidade}, ${i.preco_unitario});`).join("\n")}\ncommit;`,
+    `const { data: ped } = await sb.from('pedidos')\n  .insert({ cliente_id: ${p.cliente_id}, status: ${JSON.stringify(p.status)} })\n  .select().single()\n\nawait sb.from('itens_pedido').insert([\n${p.itens.map(i => `  { pedido_id: ped.id, produto_id: ${i.produto_id}, quantidade: ${i.quantidade}, preco_unitario: ${i.preco_unitario} }`).join(",\n")}\n])\n// em produção: uma função RPC para ficar\n// numa única transação (tudo ou nada)`],
+  setStatus: (id, st) => ["Mudar status do pedido", `update pedidos\nset status = ${sq(st)}\nwhere id = ${id};`, `await sb.from('pedidos')\n  .update({ status: ${JSON.stringify(st)} })\n  .eq('id', ${id})`],
+  delPedido: id => ["Excluir pedido", `delete from pedidos where id = ${id};\n-- itens_pedido some junto (ON DELETE CASCADE)`, `await sb.from('pedidos')\n  .delete()\n  .eq('id', ${id})`],
+};
+let ultimaMutacao = 0;
+function comTrace(impl) {
+  const out = {};
+  for (const k of Object.keys(impl)) {
+    out[k] = async (...a) => {
+      if (TRACES[k]) {
+        const leitura = k.startsWith("list");
+        // recargas automáticas logo após uma escrita não escondem o SQL da escrita
+        if (!(leitura && Date.now() - ultimaMutacao < 1500)) trace(...TRACES[k](...a));
+        if (!leitura) ultimaMutacao = Date.now();
+      }
+      return impl[k](...a);
+    };
+  }
+  return out;
+}
+
+/* ============================ API SUPABASE (real) ============================ */
+const um = x => Array.isArray(x) ? x[0] : x;
+function apiSupabase(sb) {
+  const run = async q => { const r = await q; if (r.error) { r.error.status = r.status; throw r.error; } return r.data; };
+  return {
+    listClientes: () => run(sb.from("clientes").select("*").order("id", { ascending: false })),
+    addCliente: c => run(sb.from("clientes").insert({ nome: c.nome, email: c.email }).select().single()),
+    delCliente: id => run(sb.from("clientes").delete().eq("id", id)),
+    listProdutos: () => run(sb.from("produtos").select("*").order("id", { ascending: false })),
+    addProduto: p => run(sb.from("produtos").insert(p).select().single()),
+    delProduto: id => run(sb.from("produtos").delete().eq("id", id)),
+    async listPedidos() {
+      const rows = await run(sb.from("pedidos")
+        .select("id, status, criado_em, clientes(nome, email), itens_pedido(quantidade, preco_unitario, produtos(nome))")
+        .order("id", { ascending: false }));
+      return rows.map(r => ({
+        id: r.id, status: r.status, criado_em: r.criado_em, cliente: um(r.clientes) || {},
+        itens: (r.itens_pedido || []).map(i => ({ quantidade: i.quantidade, preco_unitario: Number(i.preco_unitario), nome: um(i.produtos)?.nome })),
+      }));
+    },
+    async addPedido({ cliente_id, status, itens }) {
+      const ped = await run(sb.from("pedidos").insert({ cliente_id, status }).select().single());
+      try { await run(sb.from("itens_pedido").insert(itens.map(i => ({ pedido_id: ped.id, ...i })))); }
+      catch (e) { await sb.from("pedidos").delete().eq("id", ped.id); throw e; }   // "desfaz" na mão
+      return ped;
+    },
+    setStatus: (id, status) => run(sb.from("pedidos").update({ status }).eq("id", id)),
+    delPedido: id => run(sb.from("pedidos").delete().eq("id", id)),
+
+    /* ---- diagnóstico: o que já está pronto no backend? ---- */
+    async diag() {
+      const d = { conexao: { ok: false, msg: "" }, tabelas: {}, dados: {}, leitura: null };
+      let primeiro = true;
+      for (const t of TABELAS) {
+        const r = await sb.from(t).select("*", { count: "exact", head: true });
+        const e = r.error;
+        if (!e) { d.tabelas[t] = { ok: true }; d.dados[t] = r.count ?? 0; if (primeiro) d.conexao = { ok: true, msg: "Projeto respondeu." }; }
+        else if (e.code === "PGRST205" || e.code === "42P01" || /Could not find the table/i.test(e.message)) {
+          d.tabelas[t] = { ok: false, msg: "não existe" }; if (primeiro) d.conexao = { ok: true, msg: "Projeto respondeu." };
+        } else if (e.code === "42501") {
+          d.tabelas[t] = { ok: true }; d.leitura = { ok: false, msg: "A tabela existe, mas o papel anon não tem GRANT (rode 02_permissoes.sql)." };
+          if (primeiro) d.conexao = { ok: true, msg: "Projeto respondeu." };
+        } else {
+          d.conexao = { ok: false, msg: explicar({ ...e, status: r.status }) };
+          return d;      // chave/URL errada: não adianta seguir
+        }
+        primeiro = false;
+      }
+      return d;
+    },
+    async testarEscrita() {
+      const email = `teste-${Date.now()}@teste.local`;
+      const ins = await sb.from("clientes").insert({ nome: "__teste__", email }).select().single();
+      if (ins.error) throw ins.error;
+      const del = await sb.from("clientes").delete().eq("id", ins.data.id);
+      if (del.error) throw del.error;
+      return true;
+    },
+  };
+}
+
+/* ============================ API SIMULADA (plano B) ============================ */
+function apiSimulada() {
+  const KEY = "demo_relacional_v1";
+  const semente = () => ({
+    seq: { clientes: 4, produtos: 6, pedidos: 3, itens: 4 },
+    clientes: [
+      { id: 3, nome: "Carla Mendes", email: "carla@exemplo.com", criado_em: new Date().toISOString() },
+      { id: 2, nome: "Bruno Lima", email: "bruno@exemplo.com", criado_em: new Date().toISOString() },
+      { id: 1, nome: "Ana Souza", email: "ana@exemplo.com", criado_em: new Date().toISOString() }],
+    produtos: [
+      { id: 5, nome: "Webcam Full HD", preco: 249, estoque: 12 }, { id: 4, nome: "Headset USB", preco: 189.5, estoque: 22 },
+      { id: 3, nome: 'Monitor 24"', preco: 799, estoque: 8 }, { id: 2, nome: "Mouse sem fio", preco: 99.9, estoque: 40 },
+      { id: 1, nome: "Teclado mecânico", preco: 289.9, estoque: 15 }],
+    pedidos: [{ id: 2, cliente_id: 2, status: "novo", criado_em: new Date().toISOString() }, { id: 1, cliente_id: 1, status: "pago", criado_em: new Date().toISOString() }],
+    itens: [{ id: 3, pedido_id: 2, produto_id: 3, quantidade: 1, preco_unitario: 799 }, { id: 2, pedido_id: 1, produto_id: 2, quantidade: 2, preco_unitario: 99.9 }, { id: 1, pedido_id: 1, produto_id: 1, quantidade: 1, preco_unitario: 289.9 }],
+  });
+  const load = () => store.get(KEY) || (store.set(KEY, semente()), store.get(KEY));
+  const save = db => store.set(KEY, db);
+  const erro = (code, message) => Object.assign(new Error(message), { code });
+  const next = (db, t) => db.seq[t]++;
+  return {
+    async listClientes() { return load().clientes; },
+    async addCliente(c) {
+      const db = load();
+      if (db.clientes.some(x => x.email.toLowerCase() === c.email.toLowerCase())) throw erro("23505", 'duplicate key value violates unique constraint "clientes_email_key"');
+      const r = { id: next(db, "clientes"), ...c, criado_em: new Date().toISOString() }; db.clientes.unshift(r); save(db); return r;
+    },
+    async delCliente(id) {
+      const db = load();
+      if (db.pedidos.some(p => p.cliente_id === id)) throw erro("23503", 'update or delete on table "clientes" violates foreign key constraint "pedidos_cliente_id_fkey" on table "pedidos"');
+      db.clientes = db.clientes.filter(c => c.id !== id); save(db);
+    },
+    async listProdutos() { return load().produtos; },
+    async addProduto(p) {
+      if (p.preco < 0) throw erro("23514", 'new row for relation "produtos" violates check constraint "produtos_preco_check"');
+      if (p.estoque < 0) throw erro("23514", 'new row for relation "produtos" violates check constraint "produtos_estoque_check"');
+      const db = load(); const r = { id: next(db, "produtos"), ...p }; db.produtos.unshift(r); save(db); return r;
+    },
+    async delProduto(id) {
+      const db = load();
+      if (db.itens.some(i => i.produto_id === id)) throw erro("23503", 'update or delete on table "produtos" violates foreign key constraint "itens_pedido_produto_id_fkey" on table "itens_pedido"');
+      db.produtos = db.produtos.filter(p => p.id !== id); save(db);
+    },
+    async listPedidos() {
+      const db = load();
+      return db.pedidos.map(p => ({
+        id: p.id, status: p.status, criado_em: p.criado_em, cliente: db.clientes.find(c => c.id === p.cliente_id) || {},
+        itens: db.itens.filter(i => i.pedido_id === p.id).map(i => ({ quantidade: i.quantidade, preco_unitario: i.preco_unitario, nome: db.produtos.find(x => x.id === i.produto_id)?.nome })),
+      }));
+    },
+    async addPedido({ cliente_id, status, itens }) {
+      const db = load(); const p = { id: next(db, "pedidos"), cliente_id, status, criado_em: new Date().toISOString() };
+      db.pedidos.unshift(p); itens.forEach(i => db.itens.push({ id: next(db, "itens"), pedido_id: p.id, ...i })); save(db); return p;
+    },
+    async setStatus(id, status) { const db = load(); db.pedidos.find(p => p.id === id).status = status; save(db); },
+    async delPedido(id) { const db = load(); db.pedidos = db.pedidos.filter(p => p.id !== id); db.itens = db.itens.filter(i => i.pedido_id !== id); save(db); },
+    async diag() {
+      const db = load();
+      return { conexao: { ok: true, msg: "Modo simulado (sem backend)." }, tabelas: Object.fromEntries(TABELAS.map(t => [t, { ok: true }])), dados: { clientes: db.clientes.length }, leitura: null };
+    },
+    async testarEscrita() { return true; },
+  };
+}
+
+/* ================================ ESTADO ================================ */
+let modo = null;            // "supabase" | "sim" | null
+let api = null;
+let diag = null;
+let escritaOk = null;       // null = não testado | true | false(msg)
+let carrinho = [];
+
+function setModo(m, impl) {
+  modo = m; api = impl ? comTrace(impl) : null;
+  const s = $("#status");
+  s.className = "pill" + (m === "supabase" ? " on" : m === "sim" ? " sim" : "");
+  s.textContent = m === "supabase" ? "Conectado ao Supabase" : m === "sim" ? "Modo simulado" : "Desconectado";
+}
+function checarChave(key) {
+  if (/^sb_secret_/.test(key)) throw new Error("Essa é a chave SECRETA. Nunca use no navegador — copie a Publishable key (sb_publishable_...).");
+  const partes = key.split(".");
+  if (partes.length === 3) {
+    try { const p = JSON.parse(atob(partes[1].replace(/-/g, "+").replace(/_/g, "/"))); if (p.role === "service_role") throw new Error("Essa é a chave service_role (SECRETA). Use a anon/publishable."); }
+    catch (e) { if (/service_role/.test(e.message)) throw e; }
+  }
+}
+async function conectar(url, key) {
+  url = url.trim().replace(/\/+$/, "").replace(/\/rest\/v1$/, ""); key = key.trim();
+  if (!/^https:\/\/[^/]+\.[^/]+/.test(url)) throw new Error("A Project URL deve começar com https:// (ex.: https://abcd1234.supabase.co).");
+  if (!key) throw new Error("Cole a Publishable key.");
+  checarChave(key);
+  let mod;
+  try { mod = await import(SUPABASE_CDN); }
+  catch (e) { throw new Error("Não consegui baixar o supabase-js da internet (CDN). Verifique a conexão ou use o modo simulado. [" + (e?.message || e) + "]"); }
+  const sb = mod.createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  setModo("supabase", apiSupabase(sb));
+  store.set("sb_cfg", { url, key });
+  escritaOk = null;
+  await rodarDiag();
+}
+
+/* ================================ ROTEIRO ================================ */
+async function rodarDiag() {
+  if (!api) { diag = null; renderRoteiro(); return; }
+  diag = null; renderRoteiro();
+  try { diag = await api.diag(); }
+  catch (e) { diag = { conexao: { ok: false, msg: explicar(e) }, tabelas: {}, dados: {} }; }
+  if (modo === "supabase") {
+    const s = $("#status");
+    s.className = "pill" + (diag.conexao.ok ? " on" : " off");
+    s.textContent = diag.conexao.ok ? "Conectado ao Supabase" : "Sem conexão com o Supabase";
+  }
+  renderRoteiro();
+}
+function item(estado, titulo, desc, msg, extra = "") {
+  const ic = { ok: "✔", bad: "✕", wait: "…", manual: "•" }[estado];
+  const cls = estado === "manual" ? "" : estado;
+  return `<li><div class="ico ${cls}">${ic}</div><div><h3>${titulo}</h3><p>${desc}</p>${msg ? `<div class="msg ${cls}">${msg}</div>` : ""}${extra}</div></li>`;
+}
+const verSql = (id, txt) => `<details><summary>Ver o SQL</summary><pre>${esc(txt)}</pre></details>`;
+function renderRoteiro() {
+  const ol = $("#roteiro");
+  const d = diag;
+  const conectado = !!api;
+  const conOk = d?.conexao?.ok;
+  const faltam = d ? TABELAS.filter(t => !d.tabelas[t]?.ok) : TABELAS;
+  const tabOk = d && conOk && faltam.length === 0;
+  const clientes = d?.dados?.clientes;
+
+  let h = "";
+  h += item("manual", "Criar o projeto no Supabase",
+    "Em supabase.com/dashboard → <b>New project</b>: nome, senha do banco e região (ex.: South America – São Paulo). Aguarde ~2 min.",
+    "", `<div class="actions"><a class="btn ghost sm" style="text-decoration:none" href="https://supabase.com/dashboard" target="_blank" rel="noopener">Abrir o painel ↗</a></div>`);
+
+  h += item(!conectado ? "wait" : d === null ? "wait" : conOk ? "ok" : "bad",
+    "Conectar o front (URL + Publishable key)", "Cole os dois valores no quadro ao lado e clique em <b>Conectar</b>.",
+    !conectado ? "Aguardando conexão." : d === null ? "Testando…" : conOk ? (modo === "sim" ? d.conexao.msg : "Conectado ao projeto.") : d.conexao.msg);
+
+  h += item(!conOk ? "wait" : tabOk ? "ok" : "bad",
+    "Criar as 4 tabelas", "<code>clientes → pedidos → itens_pedido ← produtos</code>. No painel: <b>SQL Editor → New query</b> → colar → <b>Run</b>.",
+    !conOk ? "" : tabOk ? "As 4 tabelas existem." : "Faltam: " + faltam.join(", ") + ".",
+    `<div class="actions"><button class="btn sm" data-copiar="s01">Copiar 01_tabelas.sql</button></div>${verSql("s01", SQL.s01)}`);
+
+  const leituraBloq = d?.leitura && !d.leitura.ok;
+  let msgPerm = "", estPerm = "wait";
+  if (tabOk) {
+    if (leituraBloq) { estPerm = "bad"; msgPerm = d.leitura.msg; }
+    else if (escritaOk === true) { estPerm = "ok"; msgPerm = "Teste de inserir + apagar passou."; }
+    else if (escritaOk && escritaOk !== true) { estPerm = "bad"; msgPerm = escritaOk; }
+    else { estPerm = "wait"; msgPerm = "Rode o SQL e clique em <b>Testar escrita</b>."; }
+  }
+  h += item(estPerm, "Liberar acesso (GRANT + RLS)",
+    "Por padrão o banco bloqueia a API. Este script libera para a demo.",
+    msgPerm,
+    `<div class="actions"><button class="btn sm" data-copiar="s02">Copiar 02_permissoes.sql</button><button class="btn ghost sm" id="btn-escrita" ${tabOk ? "" : "disabled"}>Testar escrita</button></div>${verSql("s02", SQL.s02)}`);
+
+  h += item(!tabOk ? "wait" : clientes > 0 ? "ok" : "manual", "Dados de exemplo <span class='mut' style='font-weight:400'>(opcional)</span>",
+    "3 clientes, 5 produtos e 2 pedidos já ligados entre si.",
+    tabOk ? (clientes > 0 ? `Já há ${clientes} cliente(s).` : "Tabelas vazias — ou cadastre pelo front, ou rode o SQL.") : "",
+    `<div class="actions"><button class="btn sm" data-copiar="s03">Copiar 03_dados_exemplo.sql</button></div>${verSql("s03", SQL.s03)}`);
+
+  h += item("manual", "Usar o app", "Abra as abas <b>Clientes</b>, <b>Produtos</b> e <b>Pedidos</b>. Tente excluir um cliente que tem pedido — o banco vai recusar.", "");
+  ol.innerHTML = h;
+}
+$("#roteiro").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.copiar) copiar(SQL[b.dataset.copiar]);
+  if (b.id === "btn-escrita") {
+    try { await api.testarEscrita(); escritaOk = true; toast("Escrita funcionando ✔"); }
+    catch (err) { escritaOk = explicar(err); falhar(err); }
+    renderRoteiro();
+  }
+});
+
+/* ================================ ABAS ================================ */
+let aba = "conexao";
+function mostrarAba(nome) {
+  aba = nome;
+  $$("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === nome));
+  $$("main > section").forEach(s => s.hidden = s.id !== "tab-" + nome);
+  if (nome === "clientes") carregarClientes();
+  if (nome === "produtos") carregarProdutos();
+  if (nome === "pedidos") carregarPedidos();
+}
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) mostrarAba(b.dataset.tab); });
+function semConexao(el) {
+  el.innerHTML = `<div class="empty">Conecte ao Supabase (ou use o modo simulado) para ver os dados.<br><br><button class="btn" data-ir="conexao">Ir para Conexão</button></div>`;
+}
+function erroLista(el, e) {
+  console.error(e);
+  el.innerHTML = `<div class="banner-bad"><b>${esc(explicar(e))}</b><br><span class="small">${esc(e.code ? e.code + " · " : "")}${esc(e.message || "")}</span><br><br><button class="btn ghost sm" data-ir="conexao">Ver roteiro de configuração</button></div>`;
+}
+document.addEventListener("click", e => { const b = e.target.closest("[data-ir]"); if (b) mostrarAba(b.dataset.ir); });
+
+/* ---------------------------- CLIENTES ---------------------------- */
+async function carregarClientes() {
+  const el = $("#lista-clientes"); if (!api) return semConexao(el);
+  try {
+    const rows = await api.listClientes();
+    el.innerHTML = rows.length ? `<table><thead><tr><th>ID</th><th>Nome</th><th>E-mail</th><th>Criado em</th><th></th></tr></thead><tbody>${
+      rows.map(c => `<tr><td class="mono">${c.id}</td><td>${esc(c.nome)}</td><td>${esc(c.email)}</td><td class="mut">${fmtData(c.criado_em)}</td><td class="num"><button class="btn danger sm" data-del-cliente="${c.id}">Excluir</button></td></tr>`).join("")}</tbody></table>`
+      : `<div class="empty">Nenhum cliente ainda. Cadastre acima (ou rode o 03_dados_exemplo.sql).</div>`;
+  } catch (e) { erroLista(el, e); }
+}
+$("#form-cliente").addEventListener("submit", async e => {
+  e.preventDefault(); if (!api) return toast("Conecte primeiro.", "erro");
+  const f = e.target;
+  try { await api.addCliente({ nome: f.nome.value.trim(), email: f.email.value.trim() }); f.reset(); toast("Cliente cadastrado."); carregarClientes(); } catch (err) { falhar(err); }
+});
+$("#lista-clientes").addEventListener("click", async e => {
+  const b = e.target.closest("[data-del-cliente]"); if (!b) return;
+  try { await api.delCliente(+b.dataset.delCliente); toast("Cliente excluído."); carregarClientes(); } catch (err) { falhar(err); }
+});
+
+/* ---------------------------- PRODUTOS ---------------------------- */
+async function carregarProdutos() {
+  const el = $("#lista-produtos"); if (!api) return semConexao(el);
+  try {
+    const rows = await api.listProdutos();
+    el.innerHTML = rows.length ? `<table><thead><tr><th>ID</th><th>Produto</th><th class="num">Preço</th><th class="num">Estoque</th><th></th></tr></thead><tbody>${
+      rows.map(p => `<tr><td class="mono">${p.id}</td><td>${esc(p.nome)}</td><td class="num">${brl(p.preco)}</td><td class="num">${p.estoque}</td><td class="num"><button class="btn danger sm" data-del-produto="${p.id}">Excluir</button></td></tr>`).join("")}</tbody></table>`
+      : `<div class="empty">Nenhum produto ainda.</div>`;
+  } catch (e) { erroLista(el, e); }
+}
+$("#form-produto").addEventListener("submit", async e => {
+  e.preventDefault(); if (!api) return toast("Conecte primeiro.", "erro");
+  const f = e.target;
+  try { await api.addProduto({ nome: f.nome.value.trim(), preco: Number(f.preco.value), estoque: parseInt(f.estoque.value, 10) }); f.reset(); f.estoque.value = 10; toast("Produto cadastrado."); carregarProdutos(); } catch (err) { falhar(err); }
+});
+$("#lista-produtos").addEventListener("click", async e => {
+  const b = e.target.closest("[data-del-produto]"); if (!b) return;
+  try { await api.delProduto(+b.dataset.delProduto); toast("Produto excluído."); carregarProdutos(); } catch (err) { falhar(err); }
+});
+
+/* ---------------------------- PEDIDOS ---------------------------- */
+let cacheProdutos = [];
+async function carregarPedidos() {
+  const el = $("#lista-pedidos"); if (!api) { semConexao(el); return; }
+  try {
+    const [clientes, produtos] = await Promise.all([api.listClientes(), api.listProdutos()]);
+    cacheProdutos = produtos;
+    $("#ped-cliente").innerHTML = clientes.length ? clientes.map(c => `<option value="${c.id}">${esc(c.nome)} — ${esc(c.email)}</option>`).join("") : `<option value="">(cadastre um cliente primeiro)</option>`;
+    $("#ped-produto").innerHTML = produtos.length ? produtos.map(p => `<option value="${p.id}">${esc(p.nome)} — ${brl(p.preco)}</option>`).join("") : `<option value="">(cadastre um produto primeiro)</option>`;
+    renderCarrinho();
+    const rows = await api.listPedidos();
+    el.innerHTML = rows.length ? rows.map(p => {
+      const total = p.itens.reduce((s, i) => s + i.quantidade * i.preco_unitario, 0);
+      return `<div class="pedido"><header>
+        <b>Pedido #${p.id}</b><span class="badge ${esc(p.status)}">${esc(p.status)}</span>
+        <span class="grow mut small">${esc(p.cliente.nome || "?")} · ${esc(p.cliente.email || "")} · ${fmtData(p.criado_em)}</span>
+        <select data-status="${p.id}">${["novo", "pago", "enviado", "cancelado"].map(s => `<option ${s === p.status ? "selected" : ""}>${s}</option>`).join("")}</select>
+        <button class="btn danger sm" data-del-pedido="${p.id}">Excluir</button></header>
+        <table><tbody>${p.itens.map(i => `<tr><td>${esc(i.nome)}</td><td class="num">${i.quantidade} × ${brl(i.preco_unitario)}</td><td class="num">${brl(i.quantidade * i.preco_unitario)}</td></tr>`).join("")}</tbody></table>
+        <div class="num total" style="text-align:right;margin-top:6px">Total ${brl(total)}</div></div>`;
+    }).join("") : `<div class="empty">Nenhum pedido ainda.</div>`;
+  } catch (e) { erroLista(el, e); }
+}
+function renderCarrinho() {
+  const el = $("#ped-cart");
+  if (!carrinho.length) { el.innerHTML = `<p class="small mut" style="margin:10px 0">Nenhum item no pedido ainda.</p>`; return; }
+  const total = carrinho.reduce((s, i) => s + i.quantidade * i.preco_unitario, 0);
+  el.innerHTML = `<div class="cart"><table><tbody>${carrinho.map((i, ix) => `<tr><td>${esc(i.nome)}</td><td class="num">${i.quantidade} × ${brl(i.preco_unitario)}</td><td class="num">${brl(i.quantidade * i.preco_unitario)}</td><td class="num"><button class="btn danger sm" type="button" data-rm="${ix}">✕</button></td></tr>`).join("")}
+    <tr><td colspan="2"><b>Total</b></td><td class="num"><b>${brl(total)}</b></td><td></td></tr></tbody></table></div>`;
+}
+$("#ped-add").addEventListener("click", () => {
+  const id = +$("#ped-produto").value, q = parseInt($("#ped-qtd").value, 10);
+  const p = cacheProdutos.find(x => x.id === id); if (!p) return toast("Escolha um produto.", "erro");
+  if (!(q > 0)) return toast("Quantidade deve ser maior que zero.", "erro");
+  const ja = carrinho.find(i => i.produto_id === id);
+  if (ja) ja.quantidade += q; else carrinho.push({ produto_id: id, nome: p.nome, quantidade: q, preco_unitario: Number(p.preco) });
+  renderCarrinho();
+});
+$("#ped-cart").addEventListener("click", e => { const b = e.target.closest("[data-rm]"); if (b) { carrinho.splice(+b.dataset.rm, 1); renderCarrinho(); } });
+$("#ped-salvar").addEventListener("click", async () => {
+  if (!api) return toast("Conecte primeiro.", "erro");
+  const cliente_id = +$("#ped-cliente").value; if (!cliente_id) return toast("Escolha um cliente.", "erro");
+  if (!carrinho.length) return toast("Adicione pelo menos um item.", "erro");
+  try {
+    await api.addPedido({ cliente_id, status: $("#ped-status").value, itens: carrinho.map(({ produto_id, quantidade, preco_unitario }) => ({ produto_id, quantidade, preco_unitario })) });
+    carrinho = []; toast("Pedido criado."); carregarPedidos();
+  } catch (err) { falhar(err); }
+});
+$("#lista-pedidos").addEventListener("click", async e => {
+  const b = e.target.closest("[data-del-pedido]"); if (!b) return;
+  try { await api.delPedido(+b.dataset.delPedido); toast("Pedido excluído (e seus itens, em cascata)."); carregarPedidos(); } catch (err) { falhar(err); }
+});
+$("#lista-pedidos").addEventListener("change", async e => {
+  const s = e.target.closest("[data-status]"); if (!s) return;
+  try { await api.setStatus(+s.dataset.status, s.value); toast("Status atualizado."); carregarPedidos(); } catch (err) { falhar(err); }
+});
+
+/* ============================ BOTÕES DA CONEXÃO ============================ */
+$("#btn-conectar").addEventListener("click", async () => {
+  const b = $("#btn-conectar"); b.disabled = true; b.textContent = "Conectando…";
+  try { await conectar($("#cfg-url").value, $("#cfg-key").value); toast("Conectado. Veja o roteiro ao lado."); }
+  catch (e) { falhar(e); }
+  finally { b.disabled = false; b.textContent = "Conectar"; }
+});
+$("#btn-diag").addEventListener("click", rodarDiag);
+$("#btn-sim").addEventListener("click", async () => { setModo("sim", apiSimulada()); escritaOk = true; await rodarDiag(); toast("Modo simulado ativo — dados só neste navegador."); });
+$("#btn-desc").addEventListener("click", () => { store.del("sb_cfg"); setModo(null, null); diag = null; escritaOk = null; renderRoteiro(); toast("Desconectado."); });
+
+/* ================================ INÍCIO ================================ */
+(async function iniciar() {
+  const salvo = store.get("sb_cfg") || CONFIG_PADRAO;
+  $("#cfg-url").value = salvo.url || ""; $("#cfg-key").value = salvo.key || "";
+  renderRoteiro();
+  const q = new URLSearchParams(location.search);
+  if (q.get("sim") === "1") { setModo("sim", apiSimulada()); escritaOk = true; await rodarDiag(); return; }
+  if (salvo.url && salvo.key) { try { await conectar(salvo.url, salvo.key); } catch (e) { falhar(e); } }
+})();
+</script>
+</body>
+</html>

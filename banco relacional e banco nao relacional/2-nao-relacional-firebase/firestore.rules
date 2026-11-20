@@ -1,0 +1,36 @@
+rules_version = '2';
+
+// ============================================================
+// REGRAS DO FIRESTORE — projeto de demonstração (Mini-Loja)
+//
+// No banco relacional, o próprio banco garante os dados com
+// NOT NULL, CHECK e FOREIGN KEY. No Firestore não existe esquema:
+// quem faz esse papel são estas REGRAS.
+//
+// ⚠ SOMENTE PARA DEMONSTRAÇÃO: qualquer visitante pode ler e
+//   escrever. Em produção, exija login (Firebase Auth), por ex.:
+//   allow read, write: if request.auth != null;
+// ============================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /produtos/{id} {
+      allow read, delete: if true;
+      allow create, update: if request.resource.data.nome is string
+                            && request.resource.data.preco is number
+                            && request.resource.data.preco >= 0;
+    }
+
+    match /pedidos/{id} {
+      allow read, delete: if true;
+      allow create, update: if request.resource.data.keys().hasAll(['cliente', 'itens', 'total', 'status'])
+                            && request.resource.data.itens is list
+                            && request.resource.data.total is number;
+    }
+
+    // coleção usada pelo botão "Testar escrita" do front
+    match /_teste/{id} {
+      allow read, write: if true;
+    }
+  }
+}
